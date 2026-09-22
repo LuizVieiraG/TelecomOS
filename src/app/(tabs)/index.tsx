@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import {
   StyleSheet,
   Text,
@@ -11,6 +11,7 @@ import {
 import { Ionicons } from '@expo/vector-icons';
 import { colors, spacing, borderRadius } from '@/constants/theme';
 import type { MetricCardItem } from '@/types';
+import MetricCard from '@/components/MetricCard';
 
 const METRICS: MetricCardItem[] = [
   { id: '1', title: 'Disponibilidade', value: '99.98%', change: '+0.02%', status: 'success' },
@@ -23,6 +24,9 @@ export default function DashboardScreen() {
   const colorScheme = useColorScheme();
   const isDark = colorScheme === 'dark';
   const theme = isDark ? colors.dark : colors.light;
+
+  // Estado para controlar a visibilidade das métricas (Requisito: useState)
+  const [showMetrics, setShowMetrics] = useState(true);
 
   return (
     <ScrollView
@@ -63,39 +67,25 @@ export default function DashboardScreen() {
         </View>
       </View>
 
-      {/* Seção de Métricas */}
-      <Text style={[styles.sectionTitle, { color: theme.text }]}>Métricas da Rede</Text>
-      <View style={styles.metricsGrid}>
-        {METRICS.map((item) => (
-          <View
-            key={item.id}
-            style={[
-              styles.metricCard,
-              { backgroundColor: theme.surface, borderColor: theme.border },
-            ]}
-          >
-            <Text style={[styles.metricTitle, { color: theme.textSecondary }]}>
-              {item.title}
-            </Text>
-            <Text style={[styles.metricValue, { color: theme.text }]}>{item.value}</Text>
-            <View style={styles.changeRow}>
-              <Ionicons
-                name={item.status === 'warning' ? 'alert-circle' : 'trending-up'}
-                size={14}
-                color={item.status === 'warning' ? colors.warning : colors.primary}
-              />
-              <Text
-                style={[
-                  styles.metricChange,
-                  { color: item.status === 'warning' ? colors.warning : colors.primary },
-                ]}
-              >
-                {item.change}
-              </Text>
-            </View>
-          </View>
-        ))}
+      {/* Cabeçalho da Seção de Métricas com Botão de Toggle */}
+      <View style={styles.sectionHeader}>
+        <Text style={[styles.sectionTitle, { color: theme.text }]}>Métricas da Rede</Text>
+        <TouchableOpacity onPress={() => setShowMetrics(!showMetrics)} style={styles.toggleButton}>
+          <Text style={[styles.toggleText, { color: colors.primary }]}>
+            {showMetrics ? 'Ocultar' : 'Mostrar'}
+          </Text>
+          <Ionicons name={showMetrics ? 'chevron-up' : 'chevron-down'} size={16} color={colors.primary} />
+        </TouchableOpacity>
       </View>
+
+      {/* Seção de Métricas */}
+      {showMetrics && (
+        <View style={styles.metricsGrid}>
+          {METRICS.map((item) => (
+            <MetricCard key={item.id} item={item} theme={theme} />
+          ))}
+        </View>
+      )}
 
       {/* Ações Rápidas */}
       <Text style={[styles.sectionTitle, { color: theme.text }]}>Ações Rápidas</Text>
@@ -212,11 +202,26 @@ const styles = StyleSheet.create({
     height: 24,
     backgroundColor: '#1E293B',
   },
+  sectionHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: spacing.sm,
+    marginTop: spacing.xs,
+  },
   sectionTitle: {
     fontSize: 16,
     fontWeight: '700',
-    marginBottom: spacing.sm,
-    marginTop: spacing.xs,
+  },
+  toggleButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    padding: spacing.xs,
+  },
+  toggleText: {
+    fontSize: 12,
+    fontWeight: '600',
+    marginRight: 4,
   },
   metricsGrid: {
     flexDirection: 'row',

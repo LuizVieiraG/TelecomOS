@@ -9,6 +9,7 @@ import {
   useColorScheme,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import { useRouter } from 'expo-router';
 import { colors, spacing, borderRadius } from '@/constants/theme';
 import type { ClientItem } from '@/types';
 
@@ -52,6 +53,7 @@ const CLIENTS_DATA: ClientItem[] = [
 ];
 
 export default function ClientsScreen() {
+  const router = useRouter();
   const [searchTerm, setSearchTerm] = useState('');
   const colorScheme = useColorScheme();
   const isDark = colorScheme === 'dark';
@@ -149,6 +151,15 @@ export default function ClientsScreen() {
           );
         })}
       </ScrollView>
+
+      {/* Floating Action Button */}
+      <TouchableOpacity
+        style={[styles.fab, { backgroundColor: colors.primary }]}
+        onPress={() => router.push('/new-client' as any)}
+        activeOpacity={0.8}
+      >
+        <Ionicons name="add" size={28} color={colors.white} />
+      </TouchableOpacity>
     </View>
   );
 }
@@ -273,5 +284,20 @@ const styles = StyleSheet.create({
     color: colors.white,
     fontSize: 12,
     fontWeight: '600',
+  },
+  fab: {
+    position: 'absolute',
+    bottom: spacing.xl,
+    right: spacing.lg,
+    width: 56,
+    height: 56,
+    borderRadius: 28,
+    justifyContent: 'center',
+    alignItems: 'center',
+    elevation: 4,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.25,
+    shadowRadius: 3.84,
   },
 });
