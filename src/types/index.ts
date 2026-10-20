@@ -20,10 +20,17 @@ export interface MetricCardItem {
   status: 'normal' | 'warning' | 'critical' | 'success';
 }
 
+export const SERVICE_TYPES = [
+  'Instalação Fibra',
+  'Reparo de Sinal',
+  'Troca de Roteador',
+  'Manutenção Preventiva',
+] as const;
+
 export interface ServiceOrder {
   id: string;
   clientName: string;
-  serviceType: 'Instalação Fibra' | 'Reparo de Sinal' | 'Troca de Roteador' | 'Manutenção Preventiva';
+  serviceType: (typeof SERVICE_TYPES)[number];
   address: string;
   status: 'pending' | 'in_progress' | 'completed';
   priority: 'baixa' | 'media' | 'alta';
@@ -33,6 +40,8 @@ export interface ServiceOrder {
 export interface ClientItem {
   id: string;
   name: string;
+  /** somente os 11 dígitos; a máscara é aplicada na exibição */
+  cpf?: string;
   plan: string;
   speed: string;
   status: 'active' | 'pending' | 'blocked';

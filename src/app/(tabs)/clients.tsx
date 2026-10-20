@@ -4,6 +4,7 @@ import {
   Text,
   View,
   ScrollView,
+  ActivityIndicator,
   TextInput,
   TouchableOpacity,
   useColorScheme,
@@ -11,55 +12,21 @@ import {
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import { colors, spacing, borderRadius } from '@/constants/theme';
-import type { ClientItem } from '@/types';
-
-const CLIENTS_DATA: ClientItem[] = [
-  {
-    id: 'CLI-101',
-    name: 'Carlos Eduardo Santos',
-    plan: 'Fibra 600 Mega Pro',
-    speed: '600 Mbps',
-    status: 'active',
-    address: 'Rua Oscar Freire, 1420',
-    onuStatus: 'online',
-  },
-  {
-    id: 'CLI-102',
-    name: 'Tech Solutions Consultoria',
-    plan: 'Link Dedicado 1 Gbps',
-    speed: '1000 Mbps',
-    status: 'active',
-    address: 'Av. Faria Lima, 3477',
-    onuStatus: 'online',
-  },
-  {
-    id: 'CLI-103',
-    name: 'Juliana Fernandes',
-    plan: 'Fibra 400 Mega Residencial',
-    speed: '400 Mbps',
-    status: 'pending',
-    address: 'Rua Pamplona, 630',
-    onuStatus: 'offline',
-  },
-  {
-    id: 'CLI-104',
-    name: 'Padaria & Confeitaria Central',
-    plan: 'Fibra 500 Mega Comercial',
-    speed: '500 Mbps',
-    status: 'blocked',
-    address: 'Rua Haddock Lobo, 915',
-    onuStatus: 'offline',
-  },
-];
+import { useAsyncList } from '@/hooks/useAsyncList';
+import { listClients } from '@/services/clients';
+import { useAuth } from '@/context/AuthContext';
 
 export default function ClientsScreen() {
   const router = useRouter();
+  const { canWrite } = useAuth();
   const [searchTerm, setSearchTerm] = useState('');
   const colorScheme = useColorScheme();
   const isDark = colorScheme === 'dark';
   const theme = isDark ? colors.dark : colors.light;
 
-  const filteredClients = CLIENTS_DATA.filter((client) =>
+  const { items: clients, loading, error } = useAsyncList(listClients);
+
+  const filteredClients = clients.filter((client) =>
     client.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
     client.plan.toLowerCase().includes(searchTerm.toLowerCase()) ||
     client.id.toLowerCase().includes(searchTerm.toLowerCase())
@@ -88,9 +55,17 @@ export default function ClientsScreen() {
 
       {/* Lista de Clientes */}
       <ScrollView contentContainerStyle={styles.listContent} showsVerticalScrollIndicator={false}>
-        <Text style={[styles.counterText, { color: theme.textSecondary }]}>
-          Exibindo {filteredClients.length} assinantes
-        </Text>
+        {loading ? <ActivityIndicator color={colors.primary} style={{ marginTop: spacing.lg }} /> : null}
+        {error ? (
+          <Text style={[styles.counterText, { color: colors.danger }]}>
+            Não foi possível carregar os clientes: {error}
+          </Text>
+        ) : null}
+        {!loading && !error ? (
+          <Text style={[styles.counterText, { color: theme.textSecondary }]}>
+            Exibindo {filteredClients.length} assinantes
+          </Text>
+        ) : null}
 
         {filteredClients.map((client) => {
           const isOnline = client.onuStatus === 'online';
@@ -143,6 +118,8 @@ export default function ClientsScreen() {
 
                 <TouchableOpacity
                   style={[styles.manageBtn, { backgroundColor: colors.black }]}
+                  onPress={() => router.push({ pathname: '/client/[id]', params: { id: client.id } })}
+                  accessibilityRole="button"
                 >
                   <Text style={styles.manageBtnText}>Gerenciar</Text>
                 </TouchableOpacity>
@@ -152,14 +129,18 @@ export default function ClientsScreen() {
         })}
       </ScrollView>
 
-      {/* Floating Action Button */}
-      <TouchableOpacity
-        style={[styles.fab, { backgroundColor: colors.primary }]}
-        onPress={() => router.push('/new-client' as any)}
-        activeOpacity={0.8}
-      >
-        <Ionicons name="add" size={28} color={colors.white} />
-      </TouchableOpacity>
+      {/* Floating Action Button (somente admin e técnico) */}
+      {canWrite ? (
+        <TouchableOpacity
+          style={[styles.fab, { backgroundColor: colors.primary }]}
+          onPress={() => router.push('/new-client')}
+          activeOpacity={0.8}
+          accessibilityRole="button"
+          accessibilityLabel="Novo cliente"
+        >
+          <Ionicons name="add" size={28} color={colors.white} />
+        </TouchableOpacity>
+      ) : null}
     </View>
   );
 }

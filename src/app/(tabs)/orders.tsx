@@ -4,59 +4,31 @@ import {
   Text,
   View,
   ScrollView,
+  ActivityIndicator,
   TouchableOpacity,
   useColorScheme,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import { useRouter } from 'expo-router';
 import { colors, spacing, borderRadius } from '@/constants/theme';
 import type { ServiceOrder } from '@/types';
+import { useAsyncList } from '@/hooks/useAsyncList';
+import { listOrders } from '@/services/orders';
+import { useAuth } from '@/context/AuthContext';
 
-const INITIAL_ORDERS: ServiceOrder[] = [
-  {
-    id: 'OS-2041',
-    clientName: 'Roberto Carvalho',
-    serviceType: 'Instalação Fibra',
-    address: 'Av. Paulista, 1240 - Apto 82',
-    status: 'pending',
-    priority: 'alta',
-    scheduledTime: 'Hoje, 14:00',
-  },
-  {
-    id: 'OS-2042',
-    clientName: 'Clinica Médica Central',
-    serviceType: 'Reparo de Sinal',
-    address: 'Rua Augusta, 510 - Sala 3',
-    status: 'in_progress',
-    priority: 'alta',
-    scheduledTime: 'Hoje, 15:30',
-  },
-  {
-    id: 'OS-2043',
-    clientName: 'Mariana Lima',
-    serviceType: 'Troca de Roteador',
-    address: 'Rua Bela Cintra, 890',
-    status: 'pending',
-    priority: 'media',
-    scheduledTime: 'Hoje, 17:00',
-  },
-  {
-    id: 'OS-2040',
-    clientName: 'Supermercado Nova Era',
-    serviceType: 'Manutenção Preventiva',
-    address: 'Av. Brigadeiro Luis Antonio, 2100',
-    status: 'completed',
-    priority: 'baixa',
-    scheduledTime: 'Ontem, 16:20',
-  },
-];
+type OrderFilter = 'all' | ServiceOrder['status'];
 
 export default function OrdersScreen() {
-  const [filter, setFilter] = useState<'all' | 'pending' | 'in_progress' | 'completed'>('all');
+  const router = useRouter();
+  const { canWrite } = useAuth();
+  const [filter, setFilter] = useState<OrderFilter>('all');
+  const { items: orders, loading, error } = useAsyncList(listOrders);
+  const countBy = (status: ServiceOrder['status']) => orders.filter((o) => o.status === status).length;
   const colorScheme = useColorScheme();
   const isDark = colorScheme === 'dark';
   const theme = isDark ? colors.dark : colors.light;
 
-  const filteredOrders = INITIAL_ORDERS.filter((order) => {
+  const filteredOrders = orders.filter((order) => {
     if (filter === 'all') return true;
     return order.status === filter;
   });
@@ -78,17 +50,17 @@ export default function OrdersScreen() {
       {/* Filtros em Chips */}
       <View style={[styles.filterBar, { backgroundColor: theme.surface, borderBottomColor: theme.border }]}>
         <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.filterScroll}>
-          {[
-            { id: 'all', label: 'Todas (4)' },
-            { id: 'pending', label: 'Pendentes (2)' },
-            { id: 'in_progress', label: 'Em Rota (1)' },
-            { id: 'completed', label: 'Concluídas (1)' },
-          ].map((tab) => {
+          {([
+            { id: 'all', label: `Todas (${orders.length})` },
+            { id: 'pending', label: `Pendentes (${countBy('pending')})` },
+            { id: 'in_progress', label: `Em Andamento (${countBy('in_progress')})` },
+            { id: 'completed', label: `Concluídas (${countBy('completed')})` },
+          ] satisfies { id: OrderFilter; label: string }[]).map((tab) => {
             const active = filter === tab.id;
             return (
               <TouchableOpacity
                 key={tab.id}
-                onPress={() => setFilter(tab.id as any)}
+                onPress={() => setFilter(tab.id)}
                 style={[
                   styles.filterChip,
                   active
@@ -112,6 +84,10 @@ export default function OrdersScreen() {
 
       {/* Lista de Ordens */}
       <ScrollView contentContainerStyle={styles.listContent} showsVerticalScrollIndicator={false}>
+        {loading ? <ActivityIndicator color={colors.primary} style={{ marginTop: spacing.lg }} /> : null}
+        {error ? (
+          <Text style={{ color: colors.danger }}>Não foi possível carregar as ordens: {error}</Text>
+        ) : null}
         {filteredOrders.map((order) => {
           const badge = getStatusBadge(order.status);
           return (
@@ -154,6 +130,8 @@ export default function OrdersScreen() {
                 <TouchableOpacity
                   activeOpacity={0.7}
                   style={[styles.primaryActionBtn, { backgroundColor: colors.primary }]}
+                  onPress={() => router.push({ pathname: '/order/[id]', params: { id: order.id } })}
+                  accessibilityRole="button"
                 >
                   <Text style={styles.primaryActionBtnText}>Ver Detalhes</Text>
                   <Ionicons name="arrow-forward" size={14} color={colors.white} />
@@ -163,6 +141,18 @@ export default function OrdersScreen() {
           );
         })}
       </ScrollView>
+
+      {canWrite ? (
+        <TouchableOpacity
+          style={[styles.fab, { backgroundColor: colors.primary }]}
+          onPress={() => router.push('/new-order')}
+          activeOpacity={0.8}
+          accessibilityRole="button"
+          accessibilityLabel="Nova ordem de serviço"
+        >
+          <Ionicons name="add" size={28} color={colors.white} />
+        </TouchableOpacity>
+      ) : null}
     </View>
   );
 }
@@ -170,6 +160,21 @@ export default function OrdersScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
+  },
+  fab: {
+    position: 'absolute',
+    bottom: spacing.xl,
+    right: spacing.lg,
+    width: 56,
+    height: 56,
+    borderRadius: 28,
+    justifyContent: 'center',
+    alignItems: 'center',
+    elevation: 4,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.25,
+    shadowRadius: 3.84,
   },
   filterBar: {
     paddingVertical: spacing.sm,

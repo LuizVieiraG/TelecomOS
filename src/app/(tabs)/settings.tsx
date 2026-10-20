@@ -9,11 +9,31 @@ import {
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { colors, spacing, borderRadius } from '@/constants/theme';
+import { useAuth } from '@/context/AuthContext';
+import { API_URL } from '@/lib/api';
+import type { UserProfile } from '@/types';
+
+const ROLE_LABEL: Record<UserProfile['role'], string> = {
+  admin: 'ADMINISTRADOR',
+  technician: 'TÉCNICO',
+  viewer: 'VISUALIZADOR',
+};
+
+const apiHost = API_URL.replace(/^https?:\/\//, '');
 
 export default function SettingsScreen() {
   const colorScheme = useColorScheme();
   const isDark = colorScheme === 'dark';
   const theme = isDark ? colors.dark : colors.light;
+  const { profile, signOut } = useAuth();
+
+  const displayName = profile?.name || profile?.email || 'Usuário';
+  const initials = displayName
+    .split(/[\s@]+/)
+    .filter(Boolean)
+    .slice(0, 2)
+    .map((part) => part[0].toUpperCase())
+    .join('');
 
   return (
     <ScrollView
@@ -24,14 +44,16 @@ export default function SettingsScreen() {
       {/* Card do Perfil */}
       <View style={[styles.profileCard, { backgroundColor: theme.surface, borderColor: theme.border }]}>
         <View style={styles.avatarBox}>
-          <Text style={styles.avatarText}>LV</Text>
+          <Text style={styles.avatarText}>{initials}</Text>
         </View>
         <View style={styles.profileInfo}>
-          <Text style={[styles.profileName, { color: theme.text }]}>Luiz Vieira</Text>
-          <Text style={[styles.profileEmail, { color: theme.textSecondary }]}>luizvieirag12@gmail.com</Text>
-          <View style={styles.roleTag}>
-            <Text style={styles.roleText}>ADMINISTRADOR TÉCNICO</Text>
-          </View>
+          <Text style={[styles.profileName, { color: theme.text }]}>{displayName}</Text>
+          <Text style={[styles.profileEmail, { color: theme.textSecondary }]}>{profile?.email}</Text>
+          {profile ? (
+            <View style={styles.roleTag}>
+              <Text style={styles.roleText}>{ROLE_LABEL[profile.role]}</Text>
+            </View>
+          ) : null}
         </View>
       </View>
 
@@ -41,19 +63,19 @@ export default function SettingsScreen() {
         <View style={styles.menuItem}>
           <View style={styles.menuLeft}>
             <Ionicons name="server-outline" size={20} color={colors.primary} />
-            <Text style={[styles.menuLabel, { color: theme.text }]}>Host Local</Text>
+            <Text style={[styles.menuLabel, { color: theme.text }]}>API</Text>
           </View>
-          <Text style={[styles.menuValue, { color: theme.textSecondary }]}>192.168.5.4:8081</Text>
+          <Text style={[styles.menuValue, { color: theme.textSecondary }]}>{apiHost}</Text>
         </View>
 
         <View style={[styles.divider, { backgroundColor: theme.border }]} />
 
         <View style={styles.menuItem}>
           <View style={styles.menuLeft}>
-            <Ionicons name="wifi-outline" size={20} color={colors.primary} />
-            <Text style={[styles.menuLabel, { color: theme.text }]}>Canal de Transmissão</Text>
+            <Ionicons name="shield-checkmark-outline" size={20} color={colors.primary} />
+            <Text style={[styles.menuLabel, { color: theme.text }]}>Sessão</Text>
           </View>
-          <Text style={[styles.menuValue, { color: colors.success, fontWeight: '700' }]}>LAN Ativa</Text>
+          <Text style={[styles.menuValue, { color: colors.success, fontWeight: '700' }]}>Autenticada</Text>
         </View>
       </View>
 
@@ -99,6 +121,15 @@ export default function SettingsScreen() {
           <Text style={[styles.menuValue, { color: theme.textSecondary }]}>v1.0.0 (Expo SDK 57)</Text>
         </View>
       </View>
+
+      <TouchableOpacity
+        style={[styles.logoutButton, { borderColor: colors.danger }]}
+        onPress={signOut}
+        accessibilityRole="button"
+      >
+        <Ionicons name="log-out-outline" size={20} color={colors.danger} />
+        <Text style={styles.logoutText}>Sair da conta</Text>
+      </TouchableOpacity>
     </ScrollView>
   );
 }
@@ -106,6 +137,21 @@ export default function SettingsScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
+  },
+  logoutButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    height: 52,
+    borderRadius: borderRadius.md,
+    borderWidth: 1,
+    marginTop: spacing.xl,
+    gap: spacing.sm,
+  },
+  logoutText: {
+    color: colors.danger,
+    fontSize: 16,
+    fontWeight: '600',
   },
   content: {
     padding: spacing.md,

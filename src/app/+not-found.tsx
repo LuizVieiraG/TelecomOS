@@ -10,7 +10,7 @@ export default function NotFoundScreen() {
         <Text style={styles.title}>Página não encontrada</Text>
         <Text style={styles.subtitle}>O caminho requisitado não existe.</Text>
 
-        <Link href="/(tabs)/index" style={styles.link}>
+        <Link href="/" style={styles.link}>
           <Text style={styles.linkText}>Voltar para o Início</Text>
         </Link>
       </View>
