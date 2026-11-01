@@ -1,71 +1,120 @@
-import React, { useState } from 'react';
+import React, { useCallback, useState } from 'react';
 import {
+  ActivityIndicator,
+  RefreshControl,
   StyleSheet,
   Text,
   View,
   ScrollView,
   TouchableOpacity,
-  useColorScheme,
-  Platform,
 } from 'react-native';
+import { useFocusEffect, useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { colors, spacing, borderRadius } from '@/constants/theme';
-import type { MetricCardItem } from '@/types';
+import { useTheme } from '@/hooks/useTheme';
+import { useAuth } from '@/context/AuthContext';
+import { getStats } from '@/services/stats';
+import type { DashboardStats, MetricCardItem } from '@/types';
 import MetricCard from '@/components/MetricCard';
 
-const METRICS: MetricCardItem[] = [
-  { id: '1', title: 'Disponibilidade', value: '99.98%', change: '+0.02%', status: 'success' },
-  { id: '2', title: 'Nós Ativos', value: '142 / 144', change: '2 offline', status: 'warning' },
-  { id: '3', title: 'Latência Média', value: '12 ms', change: '-3 ms', status: 'success' },
-  { id: '4', title: 'Tráfego Atual', value: '8.4 Gbps', change: 'Pico normal', status: 'normal' },
-];
+// Monta os cartões a partir dos números que vieram da API.
+function buildMetrics({ clients, orders }: DashboardStats): MetricCardItem[] {
+  return [
+    { id: '1', title: 'Clientes Ativos', value: `${clients.active} / ${clients.total}`, change: `${clients.online} com ONU online`, status: 'success' },
+    { id: '2', title: 'Clientes Bloqueados', value: clients.blocked, change: `${clients.pending} pendentes`, status: clients.blocked > 0 ? 'warning' : 'normal' },
+    { id: '3', title: 'OS Pendentes', value: orders.pending, change: `${orders.inProgress} em andamento`, status: 'normal' },
+    { id: '4', title: 'OS Concluídas', value: orders.completed, change: `de ${orders.total} no total`, status: 'success' },
+  ];
+}
 
 export default function DashboardScreen() {
-  const colorScheme = useColorScheme();
-  const isDark = colorScheme === 'dark';
-  const theme = isDark ? colors.dark : colors.light;
+  const router = useRouter();
+  const { theme } = useTheme();
+  const { canWrite } = useAuth();
 
   // Estado para controlar a visibilidade das métricas (Requisito: useState)
   const [showMetrics, setShowMetrics] = useState(true);
+  const [stats, setStats] = useState<DashboardStats | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  const load = useCallback(async () => {
+    try {
+      setError(null);
+      setStats(await getStats());
+    } catch (e) {
+      setError(e instanceof Error ? e.message : 'Erro desconhecido');
+    } finally {
+      setLoading(false);
+      setRefreshing(false);
+    }
+  }, []);
+
+  // Recarrega sempre que a aba ganha foco (ex.: depois de abrir uma OS).
+  useFocusEffect(
+    useCallback(() => {
+      load();
+    }, [load]),
+  );
+
+  const actions = [
+    ...(canWrite
+      ? [{ icon: 'add-circle-outline' as const, label: 'Abrir Nova OS', desc: 'Registrar chamado de instalação ou reparo', go: () => router.push('/new-order') }]
+      : []),
+    { icon: 'list-outline' as const, label: 'Ordens de Serviço', desc: 'Acompanhar chamados abertos e em andamento', go: () => router.push('/orders') },
+    { icon: 'people-outline' as const, label: 'Buscar Assinante', desc: 'Consulta por nome, CPF ou endereço', go: () => router.push('/clients') },
+  ];
 
   return (
     <ScrollView
       style={[styles.container, { backgroundColor: theme.background }]}
       contentContainerStyle={styles.content}
       showsVerticalScrollIndicator={false}
+      refreshControl={
+        <RefreshControl
+          refreshing={refreshing}
+          onRefresh={() => {
+            setRefreshing(true);
+            load();
+          }}
+        />
+      }
     >
       {/* Banner Principal com Azul Telecom e Branco */}
       <View style={[styles.heroCard, { backgroundColor: colors.black }]}>
         <View style={styles.heroHeader}>
           <View style={styles.liveBadge}>
             <View style={styles.liveDot} />
-            <Text style={styles.liveText}>BACKBONE ONLINE</Text>
+            <Text style={styles.liveText}>{error ? 'SEM CONEXÃO' : 'DADOS DA API'}</Text>
           </View>
-          <Text style={styles.heroTime}>192.168.5.4</Text>
         </View>
 
         <Text style={styles.heroTitle}>Operação Central</Text>
         <Text style={styles.heroSubtitle}>
-          Monitoramento em tempo real de infraestrutura de fibra e roteamento.
+          Resumo de clientes e ordens de serviço, direto do banco de dados.
         </Text>
 
         <View style={styles.heroFooter}>
           <View style={styles.heroStat}>
-            <Text style={styles.heroStatValue}>1.420</Text>
+            <Text style={styles.heroStatValue}>{stats?.clients.active ?? '-'}</Text>
             <Text style={styles.heroStatLabel}>Assinantes Ativos</Text>
           </View>
           <View style={styles.heroStatDivider} />
           <View style={styles.heroStat}>
-            <Text style={styles.heroStatValue}>18</Text>
+            <Text style={styles.heroStatValue}>{stats?.orders.inProgress ?? '-'}</Text>
             <Text style={styles.heroStatLabel}>OS em Campo</Text>
           </View>
           <View style={styles.heroStatDivider} />
           <View style={styles.heroStat}>
-            <Text style={styles.heroStatValue}>0</Text>
-            <Text style={styles.heroStatLabel}>Incidentes Críticos</Text>
+            <Text style={styles.heroStatValue}>{stats?.orders.urgent ?? '-'}</Text>
+            <Text style={styles.heroStatLabel}>OS Urgentes</Text>
           </View>
         </View>
       </View>
+
+      {loading ? <ActivityIndicator color={colors.primary} style={styles.feedback} /> : null}
+      {error ? <Text style={[styles.feedback, { color: colors.danger }]}>{error}</Text> : null}
 
       {/* Cabeçalho da Seção de Métricas com Botão de Toggle */}
       <View style={styles.sectionHeader}>
@@ -79,9 +128,9 @@ export default function DashboardScreen() {
       </View>
 
       {/* Seção de Métricas */}
-      {showMetrics && (
+      {showMetrics && stats && (
         <View style={styles.metricsGrid}>
-          {METRICS.map((item) => (
+          {buildMetrics(stats).map((item) => (
             <MetricCard key={item.id} item={item} theme={theme} />
           ))}
         </View>
@@ -90,14 +139,11 @@ export default function DashboardScreen() {
       {/* Ações Rápidas */}
       <Text style={[styles.sectionTitle, { color: theme.text }]}>Ações Rápidas</Text>
       <View style={styles.actionsContainer}>
-        {[
-          { icon: 'add-circle-outline' as const, label: 'Abrir Nova OS', desc: 'Registrar chamado de instalação ou reparo' },
-          { icon: 'pulse-outline' as const, label: 'Teste de Conexão', desc: 'Ping e medição de latência nos nós' },
-          { icon: 'people-outline' as const, label: 'Buscar Assinante', desc: 'Consulta por CPF, contrato ou endereço' },
-        ].map((action, index) => (
+        {actions.map((action) => (
           <TouchableOpacity
-            key={index}
+            key={action.label}
             activeOpacity={0.7}
+            onPress={action.go}
             style={[
               styles.actionItem,
               { backgroundColor: theme.surface, borderColor: theme.border },
@@ -158,10 +204,9 @@ const styles = StyleSheet.create({
     fontWeight: '700',
     letterSpacing: 0.5,
   },
-  heroTime: {
-    color: '#94A3B8',
-    fontSize: 12,
-    fontFamily: Platform.OS === 'ios' ? 'Menlo' : 'monospace',
+  feedback: {
+    textAlign: 'center',
+    marginBottom: spacing.md,
   },
   heroTitle: {
     color: colors.white,
@@ -228,31 +273,6 @@ const styles = StyleSheet.create({
     flexWrap: 'wrap',
     gap: spacing.sm,
     marginBottom: spacing.lg,
-  },
-  metricCard: {
-    width: '48%',
-    padding: spacing.md,
-    borderRadius: borderRadius.md,
-    borderWidth: 1,
-  },
-  metricTitle: {
-    fontSize: 12,
-    fontWeight: '500',
-    marginBottom: 4,
-  },
-  metricValue: {
-    fontSize: 20,
-    fontWeight: '700',
-    marginBottom: 4,
-  },
-  changeRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 4,
-  },
-  metricChange: {
-    fontSize: 12,
-    fontWeight: '600',
   },
   actionsContainer: {
     gap: spacing.sm,

@@ -50,6 +50,7 @@ export const openapi = {
     { name: 'Autenticação' },
     { name: 'Clientes' },
     { name: 'Ordens de serviço' },
+    { name: 'Dashboard' },
   ],
   components: {
     securitySchemes: {
@@ -207,6 +208,44 @@ export const openapi = {
         security: bearer,
         responses: {
           200: { description: 'Usuário logado', content: json(ref('User')) },
+          ...authResponses,
+        },
+      },
+    },
+    '/stats': {
+      get: {
+        tags: ['Dashboard'],
+        summary: 'Contagens de clientes e ordens de serviço para o dashboard',
+        security: bearer,
+        responses: {
+          200: {
+            description: 'Estatísticas',
+            content: json({
+              type: 'object',
+              properties: {
+                clients: {
+                  type: 'object',
+                  properties: {
+                    total: { type: 'integer', example: 4 },
+                    active: { type: 'integer', example: 2 },
+                    pending: { type: 'integer', example: 1 },
+                    blocked: { type: 'integer', example: 1 },
+                    online: { type: 'integer', example: 2 },
+                  },
+                },
+                orders: {
+                  type: 'object',
+                  properties: {
+                    total: { type: 'integer', example: 4 },
+                    pending: { type: 'integer', example: 2 },
+                    inProgress: { type: 'integer', example: 1 },
+                    completed: { type: 'integer', example: 1 },
+                    urgent: { type: 'integer', example: 2, description: 'Prioridade alta ainda não concluídas' },
+                  },
+                },
+              },
+            }),
+          },
           ...authResponses,
         },
       },

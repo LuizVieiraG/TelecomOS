@@ -5,6 +5,7 @@ import { openapi } from './openapi.js';
 import { authRouter } from './routes/auth.js';
 import { clientsRouter } from './routes/clients.js';
 import { ordersRouter } from './routes/orders.js';
+import { statsRouter } from './routes/stats.js';
 
 const app = express();
 const port = Number(process.env.PORT ?? 3000);
@@ -21,6 +22,7 @@ app.get('/', (_req, res) => res.redirect('/docs'));
 app.use('/auth', authRouter);
 app.use('/clients', clientsRouter);
 app.use('/orders', ordersRouter);
+app.use('/stats', statsRouter);
 
 app.use((_req, res) => res.status(404).json({ message: 'Rota não encontrada.' }));
 

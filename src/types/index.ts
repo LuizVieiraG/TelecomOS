@@ -12,6 +12,11 @@ export interface SystemStatus {
   lastUpdated: string;
 }
 
+export interface DashboardStats {
+  clients: { total: number; active: number; pending: number; blocked: number; online: number };
+  orders: { total: number; pending: number; inProgress: number; completed: number; urgent: number };
+}
+
 export interface MetricCardItem {
   id: string;
   title: string;

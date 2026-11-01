@@ -1,0 +1,27 @@
+services:
+  - type: web
+    name: telecomos-api
+    runtime: node
+    plan: free
+    rootDir: api
+    buildCommand: npm install
+    # Sem --env-file: no Render as variáveis vêm do painel (não existe arquivo .env).
+    startCommand: node src/index.js
+    healthCheckPath: /health
+    envVars:
+      - key: NODE_VERSION
+        value: 22
+      - key: DB_SSL
+        value: "true"
+      - key: JWT_SECRET
+        generateValue: true
+      - key: DB_HOST
+        sync: false
+      - key: DB_PORT
+        sync: false
+      - key: DB_USER
+        sync: false
+      - key: DB_PASSWORD
+        sync: false
+      - key: DB_NAME
+        sync: false

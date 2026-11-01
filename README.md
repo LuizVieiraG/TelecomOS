@@ -37,3 +37,4 @@ EXPO_PUBLIC_API_URL=http://192.168.0.10:3000
 ## Documentação
 - [Checkpoint 1](docs/Checkpoint1.md)
 - [Checkpoint 2](docs/Checkpoint2.md): navegação e integração com a Web API REST
+- [Checkpoint 3](docs/Checkpoint3.md): entrega final, dashboard com dados reais e deploy da API

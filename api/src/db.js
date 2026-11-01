@@ -9,4 +9,6 @@ export const pool = mysql.createPool({
   waitForConnections: true,
   connectionLimit: 10,
   charset: 'utf8mb4',
+  // MySQL na nuvem (Aiven, TiDB, ...) exige conexão TLS: defina DB_SSL=true.
+  ssl: process.env.DB_SSL === 'true' ? { rejectUnauthorized: false } : undefined,
 });
