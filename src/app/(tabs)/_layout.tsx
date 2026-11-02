@@ -48,11 +48,11 @@ export default function TabLayout() {
         options={{
           title: 'Início',
           headerTitle: 'TelecomOS',
-          tabBarIcon: ({ color, focused }) => (
+          tabBarIcon: ({ focused }) => (
             <Ionicons
               name={focused ? 'speedometer' : 'speedometer-outline'}
               size={24}
-              color={color}
+              color={focused ? colors.primary : colors.gray}
             />
           ),
         }}
@@ -62,11 +62,11 @@ export default function TabLayout() {
         options={{
           title: 'Ordens (OS)',
           headerTitle: 'Ordens de Serviço',
-          tabBarIcon: ({ color, focused }) => (
+          tabBarIcon: ({ focused }) => (
             <Ionicons
               name={focused ? 'construct' : 'construct-outline'}
               size={24}
-              color={color}
+              color={focused ? colors.primary : colors.gray}
             />
           ),
         }}
@@ -76,11 +76,11 @@ export default function TabLayout() {
         options={{
           title: 'Clientes',
           headerTitle: 'Gestão de Clientes',
-          tabBarIcon: ({ color, focused }) => (
+          tabBarIcon: ({ focused }) => (
             <Ionicons
               name={focused ? 'people' : 'people-outline'}
               size={24}
-              color={color}
+              color={focused ? colors.primary : colors.gray}
             />
           ),
         }}
@@ -90,11 +90,11 @@ export default function TabLayout() {
         options={{
           title: 'Ajustes',
           headerTitle: 'Configurações',
-          tabBarIcon: ({ color, focused }) => (
+          tabBarIcon: ({ focused }) => (
             <Ionicons
               name={focused ? 'settings' : 'settings-outline'}
               size={24}
-              color={color}
+              color={focused ? colors.primary : colors.gray}
             />
           ),
         }}

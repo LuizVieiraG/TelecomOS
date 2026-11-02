@@ -74,8 +74,8 @@ API em **Node.js + Express + MySQL**, na pasta `api/`, com documentação **Swag
 - **Banco de dados:** MySQL em nuvem, com conexão por SSL (`DB_SSL=true`). As tabelas e os dados de exemplo são criados com `npm run db:setup`.
 - **Aplicativo:** o endereço da API é definido por `EXPO_PUBLIC_API_URL`.
 
-**URL da API publicada:** `PREENCHER_COM_A_URL_DO_RENDER`
-**Swagger:** `PREENCHER_COM_A_URL_DO_RENDER/docs`
+**URL da API publicada:** `https://telecomos-api.onrender.com`
+**Swagger:** `https://telecomos-api.onrender.com/docs`
 
 > O plano gratuito do Render hiberna a API após alguns minutos sem uso, então a primeira requisição pode levar cerca de um minuto.
 
