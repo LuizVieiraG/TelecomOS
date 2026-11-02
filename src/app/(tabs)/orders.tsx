@@ -15,6 +15,7 @@ import type { ServiceOrder } from '@/types';
 import { useAsyncList } from '@/hooks/useAsyncList';
 import { listOrders } from '@/services/orders';
 import { useAuth } from '@/context/AuthContext';
+import { EmptyState } from '@/components/EmptyState';
 
 type OrderFilter = 'all' | ServiceOrder['status'];
 
@@ -88,6 +89,22 @@ export default function OrdersScreen() {
         {error ? (
           <Text style={{ color: colors.danger }}>Não foi possível carregar as ordens: {error}</Text>
         ) : null}
+        {!loading && !error && filteredOrders.length === 0 ? (
+          orders.length === 0 ? (
+            <EmptyState
+              icon="construct-outline"
+              title="Nenhuma ordem de serviço"
+              message={canWrite ? 'Toque no botão + para abrir a primeira OS.' : undefined}
+            />
+          ) : (
+            <EmptyState
+              icon="funnel-outline"
+              title="Nenhuma OS com este status"
+              message="Escolha outro filtro para ver as demais ordens."
+            />
+          )
+        ) : null}
+
         {filteredOrders.map((order) => {
           const badge = getStatusBadge(order.status);
           return (

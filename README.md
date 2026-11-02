@@ -11,7 +11,9 @@ Sistema mobile (Expo / React Native) para provedores de internet: gestão de cli
 | `docs/` | Relatórios dos checkpoints |
 
 ## Como executar
-Requisitos: Node.js 20.6+ e MySQL 8.
+Requisitos: Node.js 20.6+ (e MySQL 8 apenas para rodar a API localmente).
+
+**Uso rápido:** a API está publicada no Render (`https://telecomos-api.onrender.com`) e o banco no Aiven. O aplicativo já aponta para ela por padrão: basta `npm install` e `npx expo start` na raiz, sem criar `.env`. As etapas abaixo servem para rodar tudo localmente.
 
 **1. Banco e API**
 ```
@@ -29,7 +31,7 @@ npx expo start
 ```
 Na tela de login, crie a primeira conta: ela vira administradora.
 
-Em celular físico (Expo Go), crie um `.env.local` na raiz com o IP do computador na rede:
+Para usar a API local no app, crie um `.env.local` na raiz. Em celular físico (Expo Go), use o IP do computador na rede; no emulador Android, `http://10.0.2.2:3000`:
 ```
 EXPO_PUBLIC_API_URL=http://192.168.0.10:3000
 ```
@@ -38,3 +40,4 @@ EXPO_PUBLIC_API_URL=http://192.168.0.10:3000
 - [Checkpoint 1](docs/Checkpoint1.md)
 - [Checkpoint 2](docs/Checkpoint2.md): navegação e integração com a Web API REST
 - [Checkpoint 3](docs/Checkpoint3.md): entrega final, dashboard com dados reais e deploy da API
+- [Termo de Uso de IA Generativa](docs/Termo-Uso-IA.md)

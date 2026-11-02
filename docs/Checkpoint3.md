@@ -19,7 +19,8 @@ Sistema para provedores de internet com gestão de **clientes** e **ordens de se
 | Context API | `AuthContext` (sessão, login, papel do usuário) |
 | Navegação (Expo Router: Tabs + Stack + rotas dinâmicas) | `src/app/` |
 | Rotas protegidas | `Stack.Protected` no layout raiz |
-| Listas (`FlatList`), `RefreshControl`, `ActivityIndicator` | Telas de clientes, ordens e dashboard |
+| Renderização de listas (`ScrollView` + `.map`), `RefreshControl`, `ActivityIndicator` | Telas de clientes, ordens e dashboard |
+| Renderização condicional | Carregando, erro, lista vazia (`EmptyState`) e botões por perfil |
 | Formulários com validação e máscara | Cadastro de cliente (CPF), abertura de OS |
 | Tema claro e escuro | `src/constants/theme.ts` |
 | Consumo de Web API (`fetch`, JWT, tratamento de erros) | `src/lib/api.ts` e `src/services/` |
@@ -33,6 +34,17 @@ Sistema para provedores de internet com gestão de **clientes** e **ordens de se
 - **Configurações:** perfil do usuário e tema.
 - Controle de acesso por perfil (visualizador, técnico e administrador), aplicado na API e refletido na interface.
 - Indicador de carregamento, mensagem de erro e confirmação antes de excluir.
+- Mensagens para **lista vazia** (nenhum cliente/OS cadastrado) e para **busca ou filtro sem resultado**, com o componente reutilizável `EmptyState`.
+
+### Tratamento de erros
+| Situação | Como o app trata |
+|---|---|
+| Falha de conexão / API indisponível | Mensagem "Sem conexão com a API" (tempo limite de 10 s, `AbortController`) |
+| Sessão expirada (HTTP 401) | Encerra a sessão e volta ao login |
+| Sem permissão (HTTP 403) | Mostra a mensagem retornada pela API |
+| Dado não encontrado (HTTP 404) | Mostra a mensagem retornada pela API |
+| Erro de validação (HTTP 400) | Mostra a mensagem da API e valida CPF e campos obrigatórios no formulário |
+| Carregando informações | `ActivityIndicator` e "puxar para atualizar" no dashboard |
 
 ## 6. Navegação
 | Rota | Tipo | Descrição |
@@ -71,8 +83,8 @@ API em **Node.js + Express + MySQL**, na pasta `api/`, com documentação **Swag
 
 ## 8. Publicação (deploy)
 - **API:** Render (Web Service), configurada pelo arquivo `render.yaml`. O `JWT_SECRET` é gerado automaticamente e as variáveis `DB_*` são informadas no painel. A rota `/health` é usada como verificação de saúde.
-- **Banco de dados:** MySQL em nuvem, com conexão por SSL (`DB_SSL=true`). As tabelas e os dados de exemplo são criados com `npm run db:setup`.
-- **Aplicativo:** o endereço da API é definido por `EXPO_PUBLIC_API_URL`.
+- **Banco de dados:** MySQL 8 hospedado no **Aiven**, com conexão por SSL (`DB_SSL=true`). As tabelas e os dados de exemplo são criados com `npm run db:setup` (script em `database/schema.sql`).
+- **Aplicativo:** usa a API publicada por padrão (`src/lib/api.ts`). A variável `EXPO_PUBLIC_API_URL` é opcional e serve para apontar para outra API, como uma local.
 
 **URL da API publicada:** `https://telecomos-api.onrender.com`
 **Swagger:** `https://telecomos-api.onrender.com/docs`
@@ -80,15 +92,21 @@ API em **Node.js + Express + MySQL**, na pasta `api/`, com documentação **Swag
 > O plano gratuito do Render hiberna a API após alguns minutos sem uso, então a primeira requisição pode levar cerca de um minuto.
 
 ## 9. Como executar
-**Opção A: usando a API publicada**
-1. Na raiz do projeto, criar `.env.local` com `EXPO_PUBLIC_API_URL=<URL da API publicada>`.
-2. `npm install`
-3. `npx expo start`
-4. Na tela de login, criar a primeira conta (vira administradora).
+Requisitos: Node.js 20.6 ou superior. Para a Opção B, também MySQL 8.
 
-**Opção B: tudo local**
-1. Na pasta `api/`: copiar `.env.example` para `.env`, preencher `DB_PASSWORD` e `JWT_SECRET`, depois `npm install`, `npm run db:setup` e `npm start`.
-2. Na raiz: `npm install` e `npx expo start`.
+**Opção A: usando a API e o banco publicados (recomendada)**
+A API (Render) e o banco (Aiven) já estão no ar, então só o aplicativo roda na máquina:
+1. `git clone -b checkpoint-3 https://github.com/LuizVieiraG/TelecomOS.git`
+2. Na raiz do projeto: `npm install`
+3. `npx expo start` e abrir no navegador (`w`), no emulador Android (`a`) ou no Expo Go (QR code).
+4. Na tela de login, entrar ou criar uma conta (a primeira conta de um banco vazio vira administradora).
+
+Não é preciso criar `.env`. Na primeira requisição, a API pode levar até 1 minuto para acordar (plano gratuito do Render).
+
+**Opção B: tudo local (aplicativo, WebAPI e banco)**
+1. **Banco de dados:** com o MySQL 8 rodando, o `database/schema.sql` é aplicado pelo passo 2 (ou manualmente com `mysql -u root -p < database/schema.sql`).
+2. **WebAPI**, na pasta `api/`: copiar `.env.example` para `.env`, preencher `DB_PASSWORD` e `JWT_SECRET`, depois `npm install`, `npm run db:setup` (cria o banco `telecomos`, as tabelas e dados de exemplo) e `npm start` (sobe em `http://localhost:3000`, Swagger em `/docs`).
+3. **Aplicativo**, na raiz: criar `.env.local` com `EXPO_PUBLIC_API_URL=http://localhost:3000` (emulador Android: `http://10.0.2.2:3000`; celular físico: o IP do computador na rede), depois `npm install` e `npx expo start`.
 
 ## 10. Dificuldades encontradas
 - **Variáveis de ambiente no Render:** o `startCommand` local usa `--env-file`, mas no Render não existe arquivo `.env`; as variáveis vêm do painel.
@@ -101,5 +119,8 @@ API em **Node.js + Express + MySQL**, na pasta `api/`, com documentação **Swag
 - Tela para o administrador gerenciar os perfis dos usuários.
 - Monitoramento de incidentes de rede e testes automatizados.
 
-## 12. Hyperlink do Repositório
+## 12. Termo de Uso de Inteligência Artificial Generativa
+Ver [Termo-Uso-IA.md](Termo-Uso-IA.md).
+
+## 13. Hyperlink do Repositório
 [https://github.com/LuizVieiraG/TelecomOS](https://github.com/LuizVieiraG/TelecomOS)

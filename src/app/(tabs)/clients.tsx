@@ -15,6 +15,7 @@ import { colors, spacing, borderRadius } from '@/constants/theme';
 import { useAsyncList } from '@/hooks/useAsyncList';
 import { listClients } from '@/services/clients';
 import { useAuth } from '@/context/AuthContext';
+import { EmptyState } from '@/components/EmptyState';
 
 export default function ClientsScreen() {
   const router = useRouter();
@@ -65,6 +66,22 @@ export default function ClientsScreen() {
           <Text style={[styles.counterText, { color: theme.textSecondary }]}>
             Exibindo {filteredClients.length} assinantes
           </Text>
+        ) : null}
+
+        {!loading && !error && filteredClients.length === 0 ? (
+          clients.length === 0 ? (
+            <EmptyState
+              icon="people-outline"
+              title="Nenhum cliente cadastrado"
+              message={canWrite ? 'Toque no botão + para cadastrar o primeiro cliente.' : undefined}
+            />
+          ) : (
+            <EmptyState
+              icon="search-outline"
+              title="Nenhum cliente encontrado"
+              message="Tente buscar por outro nome, plano ou contrato."
+            />
+          )
         ) : null}
 
         {filteredClients.map((client) => {
