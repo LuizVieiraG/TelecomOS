@@ -1,11 +1,10 @@
 // Cliente HTTP da Web API REST do TelecomOS (Node + Express + MySQL, pasta /server).
 // Verbos usados: GET (listar/buscar), POST (criar), PATCH (atualizar), DELETE (remover).
-import { Platform } from 'react-native';
 import { clearToken, getToken } from '@/lib/session';
 
-// Emulador Android enxerga o PC em 10.0.2.2. Em celular físico, defina EXPO_PUBLIC_API_URL
-// com o IP do PC na rede (ex.: http://192.168.0.10:3000).
-const DEFAULT_URL = Platform.OS === 'android' ? 'http://10.0.2.2:3000' : 'http://localhost:3000';
+// Por padrão usa a API publicada no Render. Para rodar a API local, defina EXPO_PUBLIC_API_URL
+// (emulador Android: http://10.0.2.2:3000; celular físico: IP do PC na rede, ex.: http://192.168.0.10:3000).
+const DEFAULT_URL = 'https://telecomos-api.onrender.com';
 export const API_URL = (process.env.EXPO_PUBLIC_API_URL ?? DEFAULT_URL).replace(/\/$/, '');
 
 const TIMEOUT_MS = 10000;
